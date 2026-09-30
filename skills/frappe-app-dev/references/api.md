@@ -184,6 +184,23 @@ Use `get_all` only when the method must read beyond the caller's permissions, fo
 
 `get_all` stays the right choice in code no request reaches directly: controller hooks, background jobs, patches and scheduled tasks.
 
+### Child tables
+
+Child tables (`istable: 1`) have no permissions of their own. They take them from the parent. So `frappe.get_list("Expense Item")` raises `PermissionError`, because Frappe doesn't know which parent to check.
+
+Passing `parent_doctype="Expense"` stops the error, but only checks that the caller can read *some* Expense. It still returns rows from Expenses the caller can't open. Instead:
+
+```python
+# Rows from many parents: query the parent and select child fields.
+# Permissions on Expense decide which rows come back
+frappe.get_list("Expense", fields=["name", "items.description", "items.amount"])
+
+# Rows from one parent: check that parent, then read its rows
+expense = frappe.get_doc("Expense", name)
+expense.check_permission("read")
+return expense.items
+```
+
 ## Specify HTTP methods
 
 Always declare allowed HTTP methods explicitly. Frappe auto-commits only for POST/PUT — GET requests do not commit.

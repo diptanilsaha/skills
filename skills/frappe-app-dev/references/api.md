@@ -178,7 +178,7 @@ def get_expenses(status: str):
 
 Use `get_all` only when the method must read beyond the caller's permissions, for example an aggregate over records the caller can't open. In that case:
 
-- Check the permission yourself first with `frappe.has_permission` or `doc.check_permission`.
+- Check first that the caller may see *everything* the query returns. `frappe.has_permission("Expense")` without a document isn't enough: a user who can only read their own Expenses passes it. Gate on a role (`frappe.only_for("Expense Approver")`), or on `doc.check_permission("read")` for each document the query reads.
 - Hardcode `filters` and `fields`. Never pass request values through unchecked.
 - Return only the fields the caller needs.
 
